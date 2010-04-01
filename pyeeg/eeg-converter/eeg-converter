@@ -1,0 +1,41 @@
+#!/usr/bin/python
+
+import sys
+from Converter import *
+
+if len(sys.argv) <2:
+    program = sys.argv[0].split("/")[-1]
+    s = "usage: %s <inputfile> [outputfile]\n" % program
+    sys.stderr.write(s)
+    sys.exit(1)
+
+
+c = Converter()
+input = sys.argv[1]
+
+try:
+    c.load(input)
+
+
+    if len(sys.argv)>2:
+        output = sys.argv[2]
+    else:
+        output = input+'.'+c.output
+
+    print 'conversion %s -> %s' % (c.input, c.output)
+    print 'input: %s' % input
+    print 'output: %s' % output
+    print 'n channels: %i' % c.n_channels
+    print 'n points: %i' % c.n_points
+    print 'frquency: %i' % c.frequency
+    print 'type: %s' % str(c.type)
+
+
+
+    c.convert(output)
+
+except Exception, details:
+    #sys.stderr.write(format(details)+"\n")
+    #sys.exit(1)
+    raise
+
