@@ -1,0 +1,28 @@
+#!/usr/bin/python
+
+from numpy import *
+import sys
+
+filename = sys.argv[1]
+
+f = open(filename,"rb")
+n_channels = int(f.readline().split()[1])
+n_points = int(f.readline().split()[1])
+
+buf = f.read()
+ary = frombuffer(buf,int)
+data = reshape(ary,(n_channels,n_points))
+
+outputfilename = filename + '.asc'
+of = open(outputfilename,"w")
+for j in range(n_points):
+    s = ""
+    for i in range(n_channels):
+        s+="%i\t" % data[i][j]
+    s +="\n"
+    of.write(s)
+
+f.close()
+of.close()
+
+

@@ -20,6 +20,7 @@ struct sockaddr_in serv_addr;
 int n_channels;
 int n_fft_points;
 int n_points;
+int iter = 0;
 
 void DieWithError(char *errorMessage)
 {
@@ -240,6 +241,21 @@ int main2(int sockfd, int inputsock)
         }
 
         //exit(0);
+        char sign[255];
+
+        sprintf(fname,"fftout/%i.eeg",iter++);
+        
+        //sprintf(sign,";EEG binary\n;frequency 5000\n;n-channels %i\n;n-points %i\n;type int\n",
+        sprintf(sign,";n-channels %i\n;n-points %i\n",
+            n_channels,n_fft_points);
+        f = fopen(fname,"wb");
+        fwrite(sign,strlen(sign),1,f);
+        fwrite(magsint,sizeof(int)*n_channels*n_fft_points,1,f);
+        fclose(f);
+        
+
+
+        printf("filename %s\n",fname);
 
 
         int n;
