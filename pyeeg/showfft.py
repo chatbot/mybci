@@ -5,6 +5,7 @@ from numpy import *
 sys.path.append('..')
 from network.EEGTransport import *
 from ctypes import *
+from math import *
 
 
 #n_channels = int(sys.argv[1])
@@ -74,6 +75,18 @@ def input(events):
 
 
 
+def get_layout(n_channels):
+    layout = [0,0]
+    s = sqrt(n_channels)
+    layout[1] = int(ceil(s))
+    if (s-floor(s)) >= 0.5:
+        layout[0] = int(ceil(s))
+    else:
+        layout[0] = int(floor(s))
+    return layout
+
+
+
 def draw_diagrams(data,names):
 
     global labels
@@ -83,25 +96,7 @@ def draw_diagrams(data,names):
 
     white = (255,255,255)
 	
-    if n_channels > 20:
-	layout = (5,5)
-    elif n_channels > 16:
-        layout = (4,5)
-    elif n_channels > 12:
-        layout = (4,4)
-    elif n_channels > 9:
-        layout = (3,4)	
-    elif n_channels > 6:
-	layout = (3,3)
-    elif n_channels > 4:
-	layout = (2,3)
-    elif n_channels > 2:
-	layout = (2,2)
-    elif n_channels > 1:
-	layout = (2,1)
-    else:
-	layout = (1,1)
-  	
+    layout = get_layout(n_channels)
 	
     sh = height/layout[0]
     sw = width/layout[1]

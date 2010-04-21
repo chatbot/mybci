@@ -108,9 +108,10 @@ def recompute():
     libmyfft.do_fft(n_channels,cwt_n_points,data,fft)
     sys.stderr.write('fft computed\n')
     
-    #header = xin.getTransportHeader().getEEGHeader().get_header()
+    frequency = xin.getTransportHeader().getEEGHeader().frequency
+    #print header
     header='n-points: '+str(cwt_n_points)+', n-channels: '+\
-            str(n_channels)+', type: int'
+            str(n_channels)+', frequency: '+str(frequency)+ ', type: int'
     xout.getTransportHeader().setEEGHeader(header)
     xout.sendChunked(fft)
     sys.stderr.write('sent ok, header='+header+'\n')
@@ -120,7 +121,7 @@ def recompute():
 #    fftary = fftary.reshape([n_channels,cwt_n_points])
 #    print "fftary len = %s" % len(fftary)
 #    print "fftary elem len = %s" % len(fftary[0])
-
+#
 #    s = ""
 #    for i in range(0,cwt_n_points):
 #        for j in range(0,n_channels):
@@ -157,7 +158,6 @@ while (True):
         header = xin.getTransportHeader().getEEGHeader()
         print 'Header changed, reinitialization ('+str(header.n_channels)+')'
         reinit_arrays(header.n_channels, header.n_points)
-        continue
 
     y = frombuffer(data,int,n_points*n_channels)
     y = y.reshape([n_points,n_channels])

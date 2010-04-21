@@ -92,7 +92,7 @@ class PlayerGui:
         self.scale.config(to = self.eeg.n_blocks)
 	header = 'n-channels: '+str(self.eeg.n_channels)\
 	+', n-points: '+str(self.eeg.n_points)\
-	+', freq: '+str(self.eeg.frequency)\
+	+', frequency: '+str(self.eeg.frequency)\
 	+', type: '+str(types[self.eeg.type])
 	self.player.thread.socket.getTransportHeader().setEEGHeader(header)
 	
