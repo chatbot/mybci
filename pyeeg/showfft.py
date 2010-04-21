@@ -76,13 +76,6 @@ def input(events):
 
 
 def get_layout(n_channels):
-    layout = [0,0]
-    s = sqrt(n_channels)
-    layout[1] = int(ceil(s))
-    if (s-floor(s)) >= 0.5:
-        layout[0] = int(ceil(s))
-    else:
-        layout[0] = int(floor(s))
     return layout
 
 
@@ -96,7 +89,14 @@ def draw_diagrams(data,names):
 
     white = (255,255,255)
 	
-    layout = get_layout(n_channels)
+    # calculate layout
+    layout = [0,0]
+    s = sqrt(n_channels)
+    layout[0] = floor(s+0.5)
+    #layout[0] = ceil(s) if ((s - floor(s)) >= 0.5) else floor(s)
+    layout[1] = ceil(s)
+    layout = map(int,layout)
+
 	
     sh = height/layout[0]
     sw = width/layout[1]
