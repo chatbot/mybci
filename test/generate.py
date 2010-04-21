@@ -22,7 +22,7 @@ def print_data(yy,filename):
 # chfreqs - frequencies of channels
 # time in seconds
 def sinwaves(freq,chfreqs,time,filename):
-    dt = float(time)/freq
+    dt = 1.0/freq
     t = arange(0,time,dt)
 
     
@@ -73,15 +73,26 @@ def sinwaves2(mainfreq,channels,time,filename):
 
 
 if __name__=="__main__":
-    freqs = (1,5,10)
-    sinwaves(5000,freqs,6,"sin_1-3_5000_6sec.dat")
-
+    #freqs = (1,5,10)
     freqs = range(1,22)
-    sinwaves(5000,freqs,6,"sin_1-21_5000_6sec.dat")
+#    sinwaves(5000,freqs,6,"sin_1-22.dat")
 
+
+#    freqs = range(1,22)
+#    sinwaves(5000,freqs,6,"sin_1-21_5000_6sec.dat")
+#
     chs = list()
-    chs.append( ((2,100),(50,10),(0.5,100)) )
-    chs.append( ((5,50),(50,5)) )
-    chs.append( ((0.5,50),(0,0)) )
-    sinwaves2(5000,chs,6,"test.dat")
+#    chs.append( ((50,20),(0,0)) )
+#    chs.append( ((1,250),(0,0)) )
+#    chs.append( ((5,200),(0,0)) )
+#    chs.append( ((10,150),(0,0)) )
+    chs.append( ((15,100),(0,0)) )
+    sinwaves2(5000,chs,10,"15hz.txt")
+
+
+#    chs = list()
+#    chs.append( ((2,100),(0,0)) )
+    #chs.append( ((5,50),(50,5)) )
+    #chs.append( ((0.5,50),(0,0)) )
+#    sinwaves2(5000,chs,0.9,"2hz.txt")
 

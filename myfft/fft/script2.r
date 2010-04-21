@@ -8,28 +8,16 @@ func<-function(x)
 
 layout(matrix(c(1,2,3,4), 4, 1, byrow = TRUE))
 #SETUP
-   T    <- 4096.0/5000
-
-   dt   <- 0.0002 #s
+   T    <- 0.2048 #time 0 -> T 
+   dt   <- 1.0/5000 #s
    n    <- T/dt
    F    <- 1/dt # freq domain -F/2 -> F/2
    df   <- 1/T
    t    <- seq(0,T,by=dt)  
-   freq <- 5 #Hz
+   freq <- 1 #Hz
 
 #SIGNAL FUNCTION
-   y     <- as.integer(100*sin(2*pi*freq*t))
-   y1     <- as.integer(100*sin(2*pi*6*t))
-   y2     <- as.integer(100*sin(2*pi*7*t))
-   y3     <- as.integer(100*sin(2*pi*8*t))
-   y4     <- as.integer(100*sin(2*pi*9*t))
-   y5     <- as.integer(100*sin(2*pi*10*t))
-   y6     <- as.integer(100*sin(2*pi*11*t))
-   y7     <- as.integer(100*sin(2*pi*12*t))
-   y8     <- as.integer(100*sin(2*pi*15*t))
-   y9     <- as.integer(100*sin(2*pi*20*t))
-   y10     <- as.integer(100*sin(2*pi*25*t))
-   y11    <- as.integer(100*sin(2*pi*30*t))
+   y     <- 10*sin(2*pi*freq*t) 
 
 #FREQ ARRAY
    f <- 1:length(t)/T 
@@ -46,13 +34,11 @@ layout(matrix(c(1,2,3,4), 4, 1, byrow = TRUE))
    grid(NULL,NULL, col = "lightgray", lty = "dotted",lwd = 1)
    par(mar=c(5, 4, 0, 2) + 0.1)
    
-#   plot(f[1:length(f)/2],phase[1:length(f)/2],type="l",xlab="Frequency,
-#Hz",ylab="Phase,deg")
-#   grid(NULL,NULL, col = "lightgray", lty = "dotted",lwd = 1)
-   plot(Re(Y),type="l")
+   plot(f[1:length(f)/2],phase[1:length(f)/2],type="l",xlab="Frequency,
+Hz",ylab="Phase,deg")
+   grid(NULL,NULL, col = "lightgray", lty = "dotted",lwd = 1)
    
-  # plot(f[1:length(f)/2],mag[1:length(f)/2],type="l",xlab="Frequency,
-   plot(f[1:30],mag[1:30],type="l",xlab="Frequency,
+   plot(f[1:length(f)/2],mag[1:length(f)/2],type="l",xlab="Frequency,
 Hz",ylab="Amplitude")
    grid(NULL,NULL, col = "lightgray", lty = "dotted",lwd = 1) 
    

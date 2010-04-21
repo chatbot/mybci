@@ -3,12 +3,16 @@
 import sys
 sys.path.append('..')
 from network.EEGTransport import *
+from ctypes import *
 
 cwt_n_points = int(sys.argv[1]); #4096
 mcast_port = int(sys.argv[2]);
+mcast_out_port = int(sys.argv[3]);
 #tcpN_port = int(sys.argv[3]);
 print 'n points = %i' % cwt_n_points
 print 'mcast_port = %i' % mcast_port
+print 'mcast_out_port = %i' % mcast_out_port
+
 #print 'tcpN_port = %i' % tcpN_port
 
 # datablock queue
@@ -24,8 +28,11 @@ n_points = None
 
 # Transports
 xin = EEGTransport('udp_m_serv', '224.0.0.1', mcast_port)
+xout = EEGTransport('udp_m_cl', '224.0.0.1', mcast_out_port)
 #xout = EEGTransport('udp_m_cl', '224.0.0.1', 21001)
 
+# FFT Library
+libmyfft = CDLL("libmyfft.so")
 
 #port = tcpN_port
 addr = '0.0.0.0'
@@ -50,7 +57,7 @@ def reinit_arrays(new_n_channels, new_n_points):
     n_channels = new_n_channels
     n_points = new_n_points
     
-    q=[]        
+    q=[]
     for i in range(n_channels):
         q.append([])
 #    q_len = 0
@@ -61,7 +68,7 @@ cwt_n_points: " + str(cwt_n_points) + ", n_points: " + str(n_points) + ", q_maxl
 
 
 def recompute():
-    global xout, n_channels, n_points, cwt_n_points, q
+    global xout, xin,  n_channels, n_points, cwt_n_points, q
     ary=[]
 
 #    ugliest hack 3 next lines !!!!
@@ -97,22 +104,29 @@ def recompute():
 
 
 
-    #!!!!!
+
     libmyfft.do_fft(n_channels,cwt_n_points,data,fft)
     sys.stderr.write('fft computed\n')
+    
+    #header = xin.getTransportHeader().getEEGHeader().get_header()
+    header='n-points: '+str(cwt_n_points)+', n-channels: '+\
+            str(n_channels)+', type: int'
+    xout.getTransportHeader().setEEGHeader(header)
+    xout.sendChunked(fft)
+    sys.stderr.write('sent ok, header='+header+'\n')
 
     
-    fftary = frombuffer(fft,int,n_channels*cwt_n_points)
-    fftary = fftary.reshape([n_channels,cwt_n_points])
-    print "fftary len = %s" % len(fftary)
-    print "fftary elem len = %s" % len(fftary[0])
+#    fftary = frombuffer(fft,int,n_channels*cwt_n_points)
+#    fftary = fftary.reshape([n_channels,cwt_n_points])
+#    print "fftary len = %s" % len(fftary)
+#    print "fftary elem len = %s" % len(fftary[0])
 
-    s = ""
-    for i in range(0,cwt_n_points):
-        for j in range(0,n_channels):
-            s += "%i " % fftary[j][i]
-        s += "\n"
-    open("out.fft","w").write(s)
+#    s = ""
+#    for i in range(0,cwt_n_points):
+#        for j in range(0,n_channels):
+#            s += "%i " % fftary[j][i]
+#        s += "\n"
+#    open("out.fft","w").write(s)
 
 
     q=[]
@@ -121,8 +135,6 @@ def recompute():
 
 
 
-from ctypes import *
-libmyfft = CDLL("libmyfft.so")
 
 
 
