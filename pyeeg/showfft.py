@@ -69,10 +69,6 @@ def input(events):
             pygame.display.set_mode(event.size, RESIZABLE)
             print event
         if event.type == KEYDOWN:
-#            if event.unicode == u'9':
-#                change_yscale(0.75)
-#            elif event.unicode == u'0':
-#                change_yscale(1.25)
             if event.key == K_DOWN:
                 change_yscale(0.75)
             elif event.key == K_UP:
@@ -124,7 +120,6 @@ def draw_diagrams(data,names):
             # scale and revert
             #rect = (dx*sw + r[0], dy*sh + r[1], r[2], r[3]) # not rev
             rect = (dx*sw + r[0], dy*sh + sh, r[2], -r[3])
-            #print rect
             pygame.draw.rect(screen,white,rect)
 
 
@@ -137,19 +132,12 @@ def draw_diagrams(data,names):
                 label = render_value(tick)
                 ypos = dy*sh + sh - int(mult*tick) - label.get_height()/2
 
-
-                
- #           real_dy = int(real_h/n)
- #           for k in range(n):
- #               label = render_value(int(real_h - k*real_dy))
- #               ypos = dy*sh + int(k*sh/n) - label.get_height()/2
-                labrect = (dx*sw, ypos,label.get_width(),\
-                    label.get_height())
+                labrect = (dx*sw, ypos, label.get_width(),                label.get_height())
                 screen.blit(label,labrect)
 
             # draw labels
             label = labels[names[j]]
-            labrect = (dx*sw,dy*sh,label.get_width(),label.get_height())
+            labrect = (dx*sw+sw-50,dy*sh+20,label.get_width(),label.get_height())
             screen.blit(label,labrect)
 
 
@@ -158,7 +146,7 @@ def draw_diagrams(data,names):
 
     # display number of visible points
     common_info = render_n_visible_points()
-    ystart=50
+    ystart=10
     for label in common_info:
         labrect = (10,ystart,label.get_width(), label.get_height())
         ystart+=label.get_height()
@@ -176,7 +164,7 @@ def change_yscale(factor):
 
 def change_n_visible_points(key):
     global n_visible_points
-    scales = [5,10,20,30,50,100,200,500,1000,2500,5000]
+    scales = [5,10,15,25,40,55,80,100,200,500,1000,2500,5000]
 
     change = -1 if key == 'less' else 1
     index = scales.index(n_visible_points) + change
@@ -240,7 +228,7 @@ def render_channel_names():
     global labels
     for name in names:
         font = pygame.font.Font(None,36)
-        labels[name] = font.render(name, 1, (0, 255, 0))
+        labels[name] = font.render(name, 1, (0, 0, 255))
 
 
 def render_n_visible_points():
@@ -254,17 +242,6 @@ def render_n_visible_points():
     for line in lines:
         labels.append(font.render(line,1,(0,255,0)))
     return labels
-
-
-def render_vertical_numbers(height):
-    font = pygame.font.Font(None,24)
-    n = 5
-
-    dy = int(height/n)
-    numbers = list()
-    for i in range(n):
-        numbers.append(font.render(str(i*dy), 1, (255,0,0)))
-    return numbers
 
 
 rendered_values={}
