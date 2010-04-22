@@ -21,6 +21,7 @@ class PlayerGui:
         self.e_frequency = StringVar('')
         self.type = StringVar('')
         self.n_blocks = StringVar('')
+        self.repeat = StringVar('')
         self.clearParams()
 
         self.e_freq_options = ('5000 Hz','2500 Hz','1000 Hz','500 Hz','100 Hz')
@@ -57,14 +58,17 @@ class PlayerGui:
         Label(self.r,textvariable=self.n_blocks).grid(row=7,column=1,**grid_opts)
 
 
+        Checkbutton(self.r,variable=self.repeat, text=_("Repeat:")).grid(row=8,**grid_opts)
+
+
         grid_opts['sticky'] = EW
         grid_opts['pady']=5
         self.go = Button(self.r,text=_("GO"),width=40,command=self.cbGoClicked)
-        self.go.grid(row=7,columnspan=3,**grid_opts)
+        self.go.grid(row=9,columnspan=3,**grid_opts)
 
         self.scale = Scale(self.r,from_=0,to=0,orient=HORIZONTAL, \
               command=self.cbScaleChanged)
-        self.scale.grid(row=8,columnspan=3,**grid_opts)
+        self.scale.grid(row=10,columnspan=3,**grid_opts)
 
     
     def cbGoClicked(self):
@@ -90,13 +94,13 @@ class PlayerGui:
         self.type.set(types[self.eeg.type])
 
         self.scale.config(to = self.eeg.n_blocks)
-	header = 'n-channels: '+str(self.eeg.n_channels)\
-	+', n-points: '+str(self.eeg.n_points)\
-	+', frequency: '+str(self.eeg.frequency)\
-	+', type: '+str(types[self.eeg.type])
-	self.player.thread.socket.getTransportHeader().setEEGHeader(header)
-	
-	self.r.update()
+        header = 'n-channels: '+str(self.eeg.n_channels)\
+        +', n-points: '+str(self.eeg.n_points)\
+        +', frequency: '+str(self.eeg.frequency)\
+        +', type: '+str(types[self.eeg.type])
+        self.player.thread.socket.getTransportHeader().setEEGHeader(header)
+    
+        self.r.update()
 
     def clearParams(self):
         self.n_channels.set('')
@@ -105,6 +109,7 @@ class PlayerGui:
         self.type.set('')
         self.n_blocks.set('')
         self.e_frequency.set('')
+        self.repeat.set('1')
 
 
     def cbFindClicked(self):
@@ -115,7 +120,7 @@ class PlayerGui:
         if s == '': return
             
         try:
-            self.eeg.load(s) 
+            self.eeg.load(s)
         except Exception, details:
             tkMessageBox.showerror(_("Error"),details)
             return
@@ -136,6 +141,9 @@ class PlayerGui:
 
     def cbPlayerIterate(self, size):
         if (size == 0):
-            self.cbGoClicked()
+            if self.repeat.get()=='1':
+                self.eeg.setBlockNumber(0)
+            else:
+                self.cbGoClicked()
         self.scale.set(self.eeg.current)
 

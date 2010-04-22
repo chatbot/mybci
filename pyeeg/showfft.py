@@ -9,11 +9,11 @@ from math import *
 
 
 #n_channels = int(sys.argv[1])
-n_fft_points = int(sys.argv[1])
-mcast_port = int(sys.argv[2])
+n_visible_points = 100 #int(sys.argv[1])
+mcast_port = int(sys.argv[1])
 n_points = None
 n_channels = None
-
+frequency = None
 
 xin = EEGTransport('udp_m_serv','224.0.0.1',mcast_port)
 addr='0.0.0.0'
@@ -59,7 +59,7 @@ def start():
 
     screen = pygame.display.get_surface()
 
-    render_text()
+    render_channel_names()
 
 
 def input(events):
@@ -68,10 +68,20 @@ def input(events):
             pygame.display.set_mode(event.size, RESIZABLE)
             print event
         if event.type == KEYDOWN:
-            if event.unicode == u'9':
+#            if event.unicode == u'9':
+#                change_yscale(0.75)
+#            elif event.unicode == u'0':
+#                change_yscale(1.25)
+            if event.key == K_DOWN:
                 change_yscale(0.75)
-            elif event.unicode == u'0':
+            elif event.key == K_UP:
                 change_yscale(1.25)
+            elif event.key == K_LEFT:
+                print 'less'
+                change_n_visible_points('less')
+            elif event.key == K_RIGHT:
+                print 'more'
+                change_n_visible_points('more')
 
 
 
@@ -82,7 +92,7 @@ def get_layout(n_channels):
 
 def draw_diagrams(data,names):
 
-    global labels
+    global labels, yscale
     screen = pygame.display.get_surface()
     (width, height) = screen.get_size()
     pygame.draw.rect(screen,(0,0,0),(0,0,width,height))
@@ -116,14 +126,34 @@ def draw_diagrams(data,names):
             #print rect
             pygame.draw.rect(screen,white,rect)
 
+
+            #draw vertical axe
+            n = 5
+            real_h = sh/yscale
+            real_dy = int(real_h/n)
+            for k in range(n):
+                label = render_value(int(real_h - k*real_dy))
+                ypos = dy*sh + int(k*sh/n) - label.get_height()/2
+                labrect = (dx*sw, ypos,label.get_width(),\
+                    label.get_height())
+                screen.blit(label,labrect)
+
             # draw labels
             label = labels[names[j]]
             labrect = (dx*sw,dy*sh,label.get_width(),label.get_height())
-            
             screen.blit(label,labrect)
+
 
             #rect = r
         #sys.exit(0)
+
+    # display number of visible points
+    common_info = render_n_visible_points()
+    ystart=50
+    for label in common_info:
+        labrect = (10,ystart,label.get_width(), label.get_height())
+        ystart+=label.get_height()
+        screen.blit(label,labrect)
 
     pygame.display.flip()
     #pygame.display.update()
@@ -135,15 +165,26 @@ def change_yscale(factor):
     global yscale
     yscale = yscale*factor
 
+def change_n_visible_points(key):
+    global n_visible_points
+    scales = [5,10,20,30,50,100,200,500,1000,2500,5000]
+
+    change = -1 if key == 'less' else 1
+    index = scales.index(n_visible_points) + change
+
+    if index in range(0,len(scales)):
+        n_visible_points = scales[index]
+
+
 def calc_one_diagram(pts,sw,sh):
-    global n_fft_points
+    global n_visible_points
 
     #w = sw/len(pts)
-    w = sw/n_fft_points
+    w = sw/n_visible_points
     x = 0
     y = 0
     diagram=list()
-    for h in pts[:n_fft_points]:
+    for h in pts[:n_visible_points]:
         #h = int(h*(float(sh)/maxheight))
         h = int(h*yscale)
         diagram.append((x,y,w,h))
@@ -153,7 +194,7 @@ def calc_one_diagram(pts,sw,sh):
         
 
 def generate_data():
-    global xin, n_channels, n_points
+    global xin, n_channels, n_points, frequency
 
     try:
         data = xin.recvChunked()
@@ -167,6 +208,7 @@ def generate_data():
     header = xin.getTransportHeader().getEEGHeader()
     n_channels = header.n_channels
     n_points = header.n_points
+    frequency = header.frequency
     #    print 'Header changed, reinitialization ('+str(header.n_channels)+')'
     #reinit_arrays(header.n_channels, header.n_points)
     #    continue
@@ -184,12 +226,50 @@ def get_channel_names():
 
 
 labels = {}
-def render_text():
+def render_channel_names():
     names = get_channel_names()
     global labels
     for name in names:
         font = pygame.font.Font(None,36)
         labels[name] = font.render(name, 1, (0, 255, 0))
+
+
+def render_n_visible_points():
+    global n_visible_points
+    font = pygame.font.SysFont(None,24)
+    text = 'Visible FFT points: '+str(n_visible_points) + '\n' +\
+           'Total FFT points: '+str(n_points) + '\n' +\
+           'Frequency: '+str(frequency)
+    lines = text.split('\n')
+    labels = list()
+    for line in lines:
+        labels.append(font.render(line,1,(0,255,0)))
+    return labels
+
+
+def render_vertical_numbers(height):
+    font = pygame.font.Font(None,24)
+    n = 5
+
+    dy = int(height/n)
+    numbers = list()
+    for i in range(n):
+        numbers.append(font.render(str(i*dy), 1, (255,0,0)))
+    return numbers
+
+
+rendered_values={}
+render_font = None
+def render_value(v):
+    global render_font, rendered_values
+    key = str(v)
+    if not key in rendered_values:
+        if not render_font:
+            render_font = pygame.font.Font(None,24)
+        rendered_values[key] = render_font.render(str(v), 1, (255,0,0))
+    return rendered_values[key]
+
+
 
 
 
