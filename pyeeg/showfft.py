@@ -6,6 +6,7 @@ sys.path.append('..')
 from network.EEGTransport import *
 from ctypes import *
 from math import *
+from graphlabel import *
 
 
 #n_channels = int(sys.argv[1])
@@ -130,10 +131,18 @@ def draw_diagrams(data,names):
             #draw vertical axe
             n = 5
             real_h = sh/yscale
-            real_dy = int(real_h/n)
-            for k in range(n):
-                label = render_value(int(real_h - k*real_dy))
-                ypos = dy*sh + int(k*sh/n) - label.get_height()/2
+            mult = sh/real_h
+            ticks = loose_label(0,real_h)
+            for tick in ticks:
+                label = render_value(tick)
+                ypos = dy*sh + sh - int(mult*tick) - label.get_height()/2
+
+
+                
+ #           real_dy = int(real_h/n)
+ #           for k in range(n):
+ #               label = render_value(int(real_h - k*real_dy))
+ #               ypos = dy*sh + int(k*sh/n) - label.get_height()/2
                 labrect = (dx*sw, ypos,label.get_width(),\
                     label.get_height())
                 screen.blit(label,labrect)
