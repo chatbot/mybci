@@ -4,10 +4,8 @@
 
 from math import *
 
-def loose_label(min,maxv):
+def loose_label(min,maxv,ntick):
     
-    ntick = 5
-
     range = nicenum(maxv-min,False)
     d = nicenum(range/(ntick-1),True)
     graphmin = floor(min/d)*d

@@ -15,6 +15,7 @@ mcast_port = int(sys.argv[1])
 n_points = None
 n_channels = None
 frequency = None
+ox_axis_mode = 'points'
 
 xin = EEGTransport('udp_m_serv','224.0.0.1',mcast_port)
 addr='0.0.0.0'
@@ -74,11 +75,11 @@ def input(events):
             elif event.key == K_UP:
                 change_yscale(1.25)
             elif event.key == K_LEFT:
-                print 'less'
                 change_n_visible_points('less')
             elif event.key == K_RIGHT:
-                print 'more'
                 change_n_visible_points('more')
+            elif event.unicode == u'x':
+                change_ox_axis_mode()
 
 
 
@@ -89,7 +90,8 @@ def get_layout(n_channels):
 
 def draw_diagrams(data,names):
 
-    global labels, yscale
+    global labels, yscale, n_visible_points, n_points, frequency
+    global ox_axis_mode
     screen = pygame.display.get_surface()
     (width, height) = screen.get_size()
     pygame.draw.rect(screen,(0,0,0),(0,0,width,height))
@@ -109,36 +111,60 @@ def draw_diagrams(data,names):
     sw = width/layout[1]
     #print sw,sh
 
+
     for (j,pts) in enumerate(data):
         #if j>0:
         #    continue
         diagram = calc_one_diagram(pts,sw,sh)
+        dx = j % layout[1]
+        dy = j / layout[1]
+
+
+        #draw vertical axe
+        ntick = 5 # number of ticks
+        real_h = sh/yscale
+        mult = sh/real_h
+        ticks = loose_label(0,real_h,ntick)
+        for m,tick in enumerate(ticks):
+            if m == 0: continue # pass first zero
+            label = render_value(tick)
+            xpos = dx*sw - label.get_width()/2
+            ypos = dy*sh + sh - int(mult*tick) - label.get_height()/2
+
+            labrect = (xpos, ypos, label.get_width(),                label.get_height())
+            screen.blit(label,labrect)
+
+
         for (i,r) in enumerate(diagram):
-            dx = j % layout[1]
-            dy = j / layout[1]
             #print dx,dy
             # scale and revert
             #rect = (dx*sw + r[0], dy*sh + r[1], r[2], r[3]) # not rev
             rect = (dx*sw + r[0], dy*sh + sh, r[2], -r[3])
             pygame.draw.rect(screen,white,rect)
 
+        # draw horizontal axe
+        ntick = 5 # number of ticks
+        ticks = loose_label(0, n_visible_points, ntick)
+        #(fmin,fmax) = freqs_min_max(n_visible_points, frequency)
+        #fticks = loose_label(fmin, fmax, ntick)
 
-            #draw vertical axe
-            n = 5
-            real_h = sh/yscale
-            mult = sh/real_h
-            ticks = loose_label(0,real_h)
-            for tick in ticks:
-                label = render_value(tick)
-                ypos = dy*sh + sh - int(mult*tick) - label.get_height()/2
-
-                labrect = (dx*sw, ypos, label.get_width(),                label.get_height())
-                screen.blit(label,labrect)
-
-            # draw labels
-            label = labels[names[j]]
-            labrect = (dx*sw+sw-50,dy*sh+20,label.get_width(),label.get_height())
+        mult = sw / n_visible_points
+        for tick in ticks:
+            if ox_axis_mode == 'frequencies':
+                f = compute_frequency(tick, n_points, frequency)
+            else:
+                f = tick
+            #f = tick
+            label = render_value(f)
+            xpos = dx*sw+ tick*mult - label.get_width()/2
+            ypos = dy*sh + sh - label.get_height()
+            labrect = (xpos, ypos, label.get_width(), label.get_height())
             screen.blit(label,labrect)
+
+        # draw labels
+        label = labels[names[j]]
+        labrect = (dx*sw+sw-50,dy*sh+20,label.get_width(),label.get_height())
+        screen.blit(label,labrect)
 
 
             #rect = r
@@ -232,11 +258,13 @@ def render_channel_names():
 
 
 def render_n_visible_points():
-    global n_visible_points
+    global n_visible_points, ox_axis_mode
     font = pygame.font.SysFont(None,24)
     text = 'Visible FFT points: '+str(n_visible_points) + '\n' +\
            'Total FFT points: '+str(n_points) + '\n' +\
-           'Frequency: '+str(frequency)
+           'Frequency: '+str(frequency) + '\n' +\
+           'OX axis: '+ox_axis_mode
+
     lines = text.split('\n')
     labels = list()
     for line in lines:
@@ -256,6 +284,37 @@ def render_value(v):
     return rendered_values[key]
 
 
+
+def compute_frequency(x,n_points,frequency):
+    T = float(n_points)/frequency
+    dt = T/n_points
+    df = 1.0/T
+    f = df*x
+    t = arange(0,T,dt)
+    freqs = map(lambda x: x/T, range(1,len(t)))
+    f = freqs[x]
+
+    if int(f)==f:
+        return int(f)
+    return f
+
+def freq_min_max(n_points,frequency):
+    T = float(n_points)/frequency
+    dt = T/n_points
+    df = 1.0/T
+    f = df*x
+    t = arange(0,T,dt)
+    freqs = map(lambda x: x/T, range(1,len(t)))
+    return (min(freqs),max(freqs))
+
+
+
+def change_ox_axis_mode():
+    global ox_axis_mode
+    if ox_axis_mode == 'points':
+        ox_axis_mode = 'frequencies'
+    else:
+        ox_axis_mode = 'points'
 
 
 
