@@ -66,10 +66,22 @@ def reinit_arrays(new_n_channels, new_n_points):
 cwt_n_points: " + str(cwt_n_points) + ", n_points: " + str(n_points) + ", q_maxlen: " + str(q_maxlen) +
 ""                     "\n")
 
+def nextpow2(i):
+    n = 2 
+    while n < i:
+        n = n * 2 
+    return n
+
 
 def recompute():
     global xout, xin,  n_channels, n_points, cwt_n_points, q
     ary=[]
+
+
+    cwt_new_points = nextpow2(cwt_n_points)
+    print "cwt_new_points % ", cwt_new_points
+    z = ndarray(cwt_new_points-cwt_n_points,dtype=int)
+    z.fill(0)
 
 #    ugliest hack 3 next lines !!!!
 #    for i in range(n_channels): <- this is original
@@ -77,58 +89,62 @@ def recompute():
     tmp.reverse()
     for i in tmp:
         a = concatenate(q[i])
+        a = a[:cwt_n_points]
+        #print 'shape',a.shape
 #        print 'lena:', len(a)
-        ary.append(a[:cwt_n_points])
+        ary.append(a)
+        ary.append(z)
+        #!!!
 
-#    for j in range(5):
-#	for k in ary[j]:
-#		print k
+
+    data = concatenate(ary)
+#    f = open('zxc.out','w')
+#    for i in data:
+#        f.write(str(i)+'\n')
+
+    print 'data len = %i' % len(data)
+    data = data.tostring()
+
+
+#    fftary = frombuffer(data,int,n_channels*cwt_new_points)
+#    fftary = fftary.reshape([n_channels,cwt_new_points])
+#    print "fftary len = %s" % len(fftary)
+#    print "fftary elem len = %s" % len(fftary[0])
+#
+#    s = ""
+#    for i in range(0,cwt_new_points):
+#        for j in range(0,n_channels):
+#            s += "%i " % fftary[j][i]
+#        s += "\n"
+#    open("out.fft","w").write(s)
 #    sys.exit(0)
-		
 
-    data = concatenate(ary).tostring()
     
     fft = create_string_buffer(len(data))
-#    open("21-4096","wb").write(data)
-#    header='n-channels: '+str(n_channels)+', n-points: '+str(cwt_n_points) + ',type: int'
-##    header = 'n-channels: ' + str(n_channels) + ', ' + \
-##             'n-points: ' + str(cwt_n_points) + ', ' + \
-##             'frequency: 5000, ' + \
-##             'type: int'
-##
-##    xout.getTransportHeader().setEEGHeader(header)
-##    xout.sendChunked(data)
-#    newsock.send(data)
-#    sys.stderr.write('Packet: sended\n')
-
-
-
-
-
-    libmyfft.do_fft(n_channels,cwt_n_points,data,fft)
+    libmyfft.do_fft(n_channels,cwt_new_points,data,fft)
     sys.stderr.write('fft computed\n')
     
     frequency = xin.getTransportHeader().getEEGHeader().frequency
     #print header
-    header='n-points: '+str(cwt_n_points)+', n-channels: '+\
+    header='n-points: '+str(cwt_new_points)+', n-channels: '+\
             str(n_channels)+', frequency: '+str(frequency)+ ', type: int'
     xout.getTransportHeader().setEEGHeader(header)
     xout.sendChunked(fft)
     sys.stderr.write('sent ok, header='+header+'\n')
 
     
-#    fftary = frombuffer(fft,int,n_channels*cwt_n_points)
-#    fftary = fftary.reshape([n_channels,cwt_n_points])
-#    print "fftary len = %s" % len(fftary)
-#    print "fftary elem len = %s" % len(fftary[0])
-#
-#    s = ""
-#    for i in range(0,cwt_n_points):
-#        for j in range(0,n_channels):
-#            s += "%i " % fftary[j][i]
-#        s += "\n"
-#    open("out.fft","w").write(s)
-
+    #fftary = frombuffer(fft,int,n_channels*cwt_new_points)
+    #fftary = fftary.reshape([n_channels,cwt_new_points])
+    #print "fftary len = %s" % len(fftary)
+    #print "fftary elem len = %s" % len(fftary[0])
+    #
+    #s = ""
+    #for i in range(0,cwt_new_points):
+    #    for j in range(0,n_channels):
+    #        s += "%i " % fftary[j][i]
+    #    s += "\n"
+    #open("out.fft","w").write(s)
+    #sys.exit(0)
 
     q=[]
     for i in range(n_channels):

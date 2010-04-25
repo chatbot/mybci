@@ -7,6 +7,7 @@ from network.EEGTransport import *
 from ctypes import *
 from math import *
 from graphlabel import *
+from GraphMaker import *
 
 
 #n_channels = int(sys.argv[1])
@@ -345,12 +346,78 @@ def change_ox_axis_mode():
 
 
 
+
+
+def draw(data):
+    
+    screen = pygame.display.get_surface()
+    (sw, sh) = screen.get_size()
+    pygame.draw.rect(screen,(0,0,0),(0,0,sw,sh))
+    
+    for (i,pts) in enumerate(data):
+        draw_channel(i,pts,len(data))
+    
+    pygame.display.flip()
+
+
+def draw_channel(id,pts,n_chanels):
+    # id - channel number
+    # pts - array of points
+    # total number of channels
+    screen = pygame.display.get_surface()
+    (sw, sh) = screen.get_size()
+
+
+    layout = calc_layout(n_channels)
+    dx = id % layout['w']
+    dy = id / layout['w']
+    
+    tw = sw / layout['w'] # tile width
+    th = sh / layout['h'] # tile height
+
+    sx = dx * tw # starting x
+    sy = dy * th # starting y
+
+    pygame.draw.rect(screen,(0,0,255),(sx,sy,5,5)) # diagnostic point
+
+    draw_axes()
+    draw_points()
+    draw_extra()
+
+
+def draw_axes():
+    pass
+
+def draw_points():
+    pass
+
+def draw_extra():
+    pass
+
+
+def calc_layout(n_channels):
+    # calculate layout
+    layout = {}
+    s = sqrt(n_channels)
+    layout['w'] = int(ceil(s))
+    layout['h'] = int(floor(s+0.5))
+    #layout[0] = ceil(s) if ((s - floor(s)) >= 0.5) else floor(s)
+    return layout
+
+
+
 start()
+g = GraphMaker()
 while True:
     #time.sleep(0.1)
     input(pygame.event.get())
     data = generate_data()
-    draw_diagrams(data,get_channel_names())
+    #draw_diagrams(data,get_channel_names())
+    g.draw(data,frequency)
+
+
+
+    
 
 
     

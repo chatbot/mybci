@@ -8,13 +8,13 @@ func<-function(x)
 
 layout(matrix(c(1,2,3,4), 4, 1, byrow = TRUE))
 #SETUP
-   T    <- 5. #time 0 -> T 
-   dt   <- 0.01 #s
+   T    <- 1. #time 0 -> T 
+   dt   <- 0.0002 #s
    n    <- T/dt
    F    <- 1/dt # freq domain -F/2 -> F/2
    df   <- 1/T
    t    <- seq(0,T,by=dt)  
-   freq <- 5 #Hz
+   freq <- 1 #Hz
 
 #SIGNAL FUNCTION
    y     <- 10*sin(2*pi*freq*t) 
