@@ -10,18 +10,17 @@ from graphlabel import *
 from GraphMaker import *
 
 
-#n_channels = int(sys.argv[1])
-n_visible_points = 100 #int(sys.argv[1])
-mcast_port = int(sys.argv[1])
+if len(sys.argv)>1:
+    mcast_port = int(sys.argv[1])
+else:
+    mcast_port = 17002
+
 n_points = None
 n_channels = None
 frequency = None
-ox_axis_mode = 'points'
 
 xin = EEGTransport('udp_m_serv','224.0.0.1',mcast_port)
 addr='0.0.0.0'
-
-
 
 #def reinit_arrays(new_n_channels, new_n_points):
 #    global q, q_len, q_maxlen, cwt_n_points,n_channels,n_points
@@ -60,180 +59,22 @@ def start():
     window = pygame.display.set_mode((250,100),RESIZABLE)
     pygame.display.set_caption("showfft")
 
-    screen = pygame.display.get_surface()
 
-    render_channel_names()
-
-
-def input(events):
+def input(events,g):
     for event in events:
         if event.type == VIDEORESIZE:
             pygame.display.set_mode(event.size, RESIZABLE)
             print event
         if event.type == KEYDOWN:
             if event.key == K_DOWN:
-                change_yscale(0.75)
+                g.change_yfactor(0.75)
             elif event.key == K_UP:
-                change_yscale(1.25)
+                g.change_yfactor(1.25)
             elif event.key == K_LEFT:
-                change_n_visible_points('less')
+                g.change_xfactor(0.75)
             elif event.key == K_RIGHT:
-                change_n_visible_points('more')
-            elif event.unicode == u'x':
-                change_ox_axis_mode()
+                g.change_xfactor(1.25)
 
-
-
-def get_layout(n_channels):
-    return layout
-
-
-
-def draw_diagrams(data,names):
-
-    global labels, yscale, n_visible_points, n_points, frequency
-    global ox_axis_mode
-    screen = pygame.display.get_surface()
-    (width, height) = screen.get_size()
-    pygame.draw.rect(screen,(0,0,0),(0,0,width,height))
-
-    white = (255,255,255)
-    blue = (0,0,255)
-	
-    # calculate layout
-    layout = [0,0]
-    s = sqrt(n_channels)
-    layout[0] = floor(s+0.5)
-    #layout[0] = ceil(s) if ((s - floor(s)) >= 0.5) else floor(s)
-    layout[1] = ceil(s)
-    layout = map(int,layout)
-
-	
-    sh = height/layout[0]
-    sw = width/layout[1]
-    #print sw,sh
-
-
-    for (j,pts) in enumerate(data):
-        #if j>0:
-        #    continue
-        diagram = calc_one_diagram(pts,sw,sh)
-        dx = j % layout[1]
-        dy = j / layout[1]
-
-
-        #draw vertical axe
-        ntick = 5 # number of ticks
-        real_h = sh/yscale
-        mult = sh/real_h
-        ticks = loose_label(0,real_h,ntick)
-        for m,tick in enumerate(ticks):
-            if m == 0: continue # pass first zero
-            label = render_value(tick)
-            xpos = dx*sw - label.get_width()/2
-            ypos = dy*sh + sh - int(mult*tick) - label.get_height()/2
-
-            labrect = (xpos, ypos, label.get_width(),                label.get_height())
-            screen.blit(label,labrect)
-
-
-        for (i,r) in enumerate(diagram):
-            #print dx,dy
-            # scale and revert
-            #rect = (dx*sw + r[0], dy*sh + r[1], r[2], r[3]) # not rev
-            #rect = (dx*sw + r[0] - r[2]/2, dy*sh + sh, r[2], -r[3])
-            rect = (dx*sw + r[0] - r[2]/2, dy*sh + sh, r[2], -r[3])
-
-            pygame.draw.rect(screen,white,rect)
-
-        # draw horizontal axe
-        ntick = 5 # number of ticks
-        ticks = loose_label(0, n_visible_points, ntick)
-        #(fmin,fmax) = freqs_min_max(n_visible_points, frequency)
-        #fticks = loose_label(fmin, fmax, ntick)
-
-        mult = float(sw) / n_visible_points
-        for tick in ticks:
-            if ox_axis_mode == 'frequencies':
-                f = compute_frequency(tick, n_points, frequency)
-            else:
-                f = tick
-            #f = tick
-            label = render_value(f)
-            xpos = dx*sw+ tick*mult - label.get_width()/2
-            ypos = dy*sh + sh - label.get_height()
-            labrect = (xpos, ypos, label.get_width(), label.get_height())
-            screen.blit(label,labrect)
-
-            # draw tick marks
-            x1 = dx*sw + tick*mult
-            y1 = dy*sh + sh -5
-            x2 = x1
-            y2 = y1 + 5
-            pygame.draw.line(screen,white,(x1,y1),(x2,y2))
-
-
-
-        # draw labels
-        label = labels[names[j]]
-        labrect = (dx*sw+sw-50,dy*sh+20,label.get_width(),label.get_height())
-        screen.blit(label,labrect)
-
-
-        #draw extra marks
-        x1 = dx*sw+sw; x2 = x1
-        y1 = dy*sh+sh-20; y2 = y1 + 20
-        pygame.draw.line(screen,blue,(x1,y1),(x2,y2))
-         
-         
-         #rect = r
-        #sys.exit(0)
-
-    # display number of visible points
-    common_info = render_n_visible_points(str(sw))
-    ystart=10
-    for label in common_info:
-        labrect = (10,ystart,label.get_width(), label.get_height())
-        ystart+=label.get_height()
-        screen.blit(label,labrect)
-
-    pygame.display.flip()
-    #pygame.display.update()
-
-
-yscale = 1.0 # y scale factor
-
-def change_yscale(factor):
-    global yscale
-    yscale = yscale*factor
-
-def change_n_visible_points(key):
-    global n_visible_points
-    scales = [5,10,15,25,40,55,80,100,200,500,1000,2500,5000]
-
-    change = -1 if key == 'less' else 1
-    index = scales.index(n_visible_points) + change
-
-    if index in range(0,len(scales)):
-        n_visible_points = scales[index]
-
-
-def calc_one_diagram(pts,sw,sh):
-    global n_visible_points
-
-    #w = sw/len(pts)
-    w = sw/n_visible_points
-    x = 0
-    y = 0
-    diagram=list()
-    for h in pts[:n_visible_points]:
-        #h = int(h*(float(sh)/maxheight))
-        h = int(h*yscale)
-        diagram.append((x,y,w,h))
-        x += w
-    return diagram
-        
-        
 
 def generate_data():
     global xin, n_channels, n_points, frequency
@@ -261,163 +102,12 @@ def generate_data():
     data = recompute(data,header.n_channels,header.n_points)
     return data
 
-def get_channel_names():
-    #names = ('Fp1','Fpz','Fp2','F7','F3','F4','Fz','A1','A2','Oz','Pz','Cz',	)
-    names = ["Fp1","F3","C3","P3","O1","F7","T3","T5","Fz","Pz",
-                         "A1","Fp2","F4","C4","P4","O2","F8","T4","T6","Fpz",
-                         "Cz","Oz","E1","E2","E3","E4",
-                         "U1","U2","U3","U4","U5","U6","U7","U8",
-                         "U9","U10","U11","U12","U13","U14","U15",
-                         "U1","U2","U3","U4","U5","U6","U7","U8",
-                         "N1","N2","N3","N4","N5","N6","N7","N8",
-                         "N9","N10","N11","N12","N13","N14","N15"]
-    return names
-
-
-labels = {}
-def render_channel_names():
-    names = get_channel_names()
-    global labels
-    for name in names:
-        font = pygame.font.Font(None,36)
-        labels[name] = font.render(name, 1, (0, 0, 255))
-
-
-def render_n_visible_points(extra):
-    global n_visible_points, ox_axis_mode
-    font = pygame.font.SysFont(None,24)
-    text = 'Visible FFT points: '+str(n_visible_points) + '\n' +\
-           'Total FFT points: '+str(n_points) + '\n' +\
-           'Frequency: '+str(frequency) + '\n' +\
-           'OX axis: '+ox_axis_mode+'\n'+\
-           extra
-
-
-    lines = text.split('\n')
-    labels = list()
-    for line in lines:
-        labels.append(font.render(line,1,(0,255,0)))
-    return labels
-
-
-rendered_values={}
-render_font = None
-def render_value(v):
-    global render_font, rendered_values
-    key = str(v)
-    if not key in rendered_values:
-        if not render_font:
-            render_font = pygame.font.Font(None,24)
-        rendered_values[key] = render_font.render(str(v), 1, (255,0,0))
-    return rendered_values[key]
-
-
-
-def compute_frequency(x,n_points,frequency):
-    T = float(n_points)/frequency
-    dt = T/n_points
-    df = 1.0/T
-    f = df*x
-    t = arange(0,T,dt)
-    freqs = map(lambda x: x/T, range(1,len(t)))
-    f = freqs[x]
-
-    if int(f)==f:
-        return int(f)
-    return f
-
-def freq_min_max(n_points,frequency):
-    T = float(n_points)/frequency
-    dt = T/n_points
-    df = 1.0/T
-    f = df*x
-    t = arange(0,T,dt)
-    freqs = map(lambda x: x/T, range(1,len(t)))
-    return (min(freqs),max(freqs))
-
-
-
-def change_ox_axis_mode():
-    global ox_axis_mode
-    if ox_axis_mode == 'points':
-        ox_axis_mode = 'frequencies'
-    else:
-        ox_axis_mode = 'points'
-
-
-
-
-
-def draw(data):
-    
-    screen = pygame.display.get_surface()
-    (sw, sh) = screen.get_size()
-    pygame.draw.rect(screen,(0,0,0),(0,0,sw,sh))
-    
-    for (i,pts) in enumerate(data):
-        draw_channel(i,pts,len(data))
-    
-    pygame.display.flip()
-
-
-def draw_channel(id,pts,n_chanels):
-    # id - channel number
-    # pts - array of points
-    # total number of channels
-    screen = pygame.display.get_surface()
-    (sw, sh) = screen.get_size()
-
-
-    layout = calc_layout(n_channels)
-    dx = id % layout['w']
-    dy = id / layout['w']
-    
-    tw = sw / layout['w'] # tile width
-    th = sh / layout['h'] # tile height
-
-    sx = dx * tw # starting x
-    sy = dy * th # starting y
-
-    pygame.draw.rect(screen,(0,0,255),(sx,sy,5,5)) # diagnostic point
-
-    draw_axes()
-    draw_points()
-    draw_extra()
-
-
-def draw_axes():
-    pass
-
-def draw_points():
-    pass
-
-def draw_extra():
-    pass
-
-
-def calc_layout(n_channels):
-    # calculate layout
-    layout = {}
-    s = sqrt(n_channels)
-    layout['w'] = int(ceil(s))
-    layout['h'] = int(floor(s+0.5))
-    #layout[0] = ceil(s) if ((s - floor(s)) >= 0.5) else floor(s)
-    return layout
-
 
 
 start()
 g = GraphMaker()
 while True:
-    #time.sleep(0.1)
-    input(pygame.event.get())
+    input(pygame.event.get(),g)
     data = generate_data()
-    #draw_diagrams(data,get_channel_names())
     g.draw(data,frequency)
-
-
-
-    
-
-
     

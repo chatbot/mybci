@@ -89,7 +89,7 @@ class Converter:
                     continue
 
                 if (s.find('.') != -1):
-                    print 'Float string: ', s    
+                    print 'Float string: ', s
                     self.type = float
                 
                 curr_len = len(s.split())
@@ -103,13 +103,15 @@ class Converter:
                     raise InvalidFormatError, p
           
             # determine nummber of channels and datatype
-            self.n_channels = curr_len             
+            self.n_channels = curr_len
             self.is_loaded = True
 
     def asc2eeg(self, filename):
         # Convert ASCII-file to EEG
 
-        a = array(zeros([self.n_points,self.n_channels]),
+        #!!!a = array(zeros([self.n_points,self.n_channels]),
+        #!!!          dtype=self.type)
+        a = array(zeros([self.n_channels, self.n_points]),
                   dtype=self.type)
 
         s = ';' + self.sign + '\n'
@@ -143,8 +145,10 @@ class Converter:
             nread = nread + 1
 
             s = s.split()
+    #!!!        for j in range(0,self.n_channels):
+    #!!!           a[i][j] = s[j]
             for j in range(0,self.n_channels):
-               a[i][j] = s[j]
+               a[j][i] = s[j]
     ##        print i, j, a.shape, s
     ##        raise
                    
@@ -166,10 +170,15 @@ class Converter:
         try:
             while True:
                 a = fromfile(self.fin,dtype=self.type,count=count)
-                a = a.reshape([self.n_points, self.n_channels])
+                #!!!a = a.reshape([self.n_points, self.n_channels])
+                a = a.reshape([self.n_channels, self.n_points])
                 for i in range(0,self.n_points):
-                     a[i].tofile(self.fout,sep="\t",format=self.formats[self.type])
-                     self.fout.write('\n')
+            
+                    b = a[:,i]
+
+                     #!!1a[i].tofile(self.fout,sep="\t",format=self.formats[self.type])
+                    b.tofile(self.fout,sep="\t",format=self.formats[self.type])
+                    self.fout.write('\n')
         except MemoryError:
             pass
 

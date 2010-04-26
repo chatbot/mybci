@@ -8,6 +8,7 @@ def loose_label(min,maxv,ntick):
     
     range = nicenum(maxv-min,False)
     d = nicenum(range/(ntick-1),True)
+
     graphmin = floor(min/d)*d
     graphmax = ceil(maxv/d)*d
     nfrac = max(-floor(log10(d)),0)

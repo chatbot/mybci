@@ -152,7 +152,7 @@ class EEGTransport:
         while(True):
             data = self.recvData() 
             try:
-                print len(data)
+                #print len(data)
                 orig = bz2.decompress(data)
             except Exception as e:
                 sys.stderr.write('Decompress error, skipping \

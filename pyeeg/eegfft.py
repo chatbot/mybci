@@ -4,10 +4,19 @@ import sys
 sys.path.append('..')
 from network.EEGTransport import *
 from ctypes import *
+import Queue
+from FftCalculator import *
 
-cwt_n_points = int(sys.argv[1]); #4096
-mcast_port = int(sys.argv[2]);
-mcast_out_port = int(sys.argv[3]);
+cwt_n_points = int(sys.argv[1]) #4096
+
+if len(sys.argv)>2:
+    mcast_port = int(sys.argv[2])
+    mcast_out_port = int(sys.argv[3])
+else:
+    mcast_port = 17001
+    mcast_out_port = 17002
+
+
 #tcpN_port = int(sys.argv[3]);
 print 'n points = %i' % cwt_n_points
 print 'mcast_port = %i' % mcast_port
@@ -36,6 +45,12 @@ libmyfft = CDLL("libmyfft.so")
 
 #port = tcpN_port
 addr = '0.0.0.0'
+
+queue = Queue.Queue(0)
+calc = FftCalculator(queue,xout)
+calc.start()
+
+
 
 
 #
@@ -83,18 +98,13 @@ def recompute():
     z = ndarray(cwt_new_points-cwt_n_points,dtype=int)
     z.fill(0)
 
-#    ugliest hack 3 next lines !!!!
-#    for i in range(n_channels): <- this is original
-    tmp = range(n_channels)
-    tmp.reverse()
-    for i in tmp:
+    for i in range(n_channels):
         a = concatenate(q[i])
         a = a[:cwt_n_points]
         #print 'shape',a.shape
 #        print 'lena:', len(a)
         ary.append(a)
         ary.append(z)
-        #!!!
 
 
     data = concatenate(ary)
@@ -167,6 +177,8 @@ while (True):
         header = xin.getTransportHeader().getEEGHeader()
         print 'Header changed, reinitialization ('+str(header.n_channels)+')'
         reinit_arrays(header.n_channels, header.n_points)
+        frequency = xin.getTransportHeader().getEEGHeader().frequency
+        calc.reset(header.n_channels, header.n_points, cwt_n_points, frequency)
         continue
 
     # first run - initialization            
@@ -174,18 +186,25 @@ while (True):
         header = xin.getTransportHeader().getEEGHeader()
         print 'Header changed, reinitialization ('+str(header.n_channels)+')'
         reinit_arrays(header.n_channels, header.n_points)
+        frequency = xin.getTransportHeader().getEEGHeader().frequency
+        calc.reset(header.n_channels, header.n_points, cwt_n_points, frequency)
+
+    
+#    open("data.out","wb").write(data)
+#    sys.exit(0)
 
     y = frombuffer(data,int,n_points*n_channels)
-    y = y.reshape([n_points,n_channels])
-    y = rot90(y)
+    y = y.reshape([n_channels,n_points])
 
-    for j in range(n_channels):
-        q[j].append(y[j])
+    queue.put(y,xout)
 
-    if (len(q[0])==q_maxlen):
-        recompute()
+#    for j in range(n_channels):
+#        q[j].append(y[j])
+
+#    if (len(q[0])==q_maxlen):
+#        recompute()
     
-    sys.stderr.write('Packet: ' + str(i) + ' received\n')
+#    sys.stderr.write('Packet: ' + str(i) + ' received\n')
     i=i+1
 
 x.close()
