@@ -56,7 +56,7 @@ class Converter:
                 s = s.split()
                 key = s[0][1:]#[1:len(s[0])-1]
                 value = s[1]
-                #print 'key =', key, ', value =',value
+                print 'key =', key, ', value =',value
                 #print key
 
                 if key == 'n-channels': self.n_channels = int(value)

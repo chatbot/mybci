@@ -16,6 +16,7 @@ class GraphMaker:
     ndraw = None
     xfactor = 1.
     yfactor = 1.
+    number = 0
 
     rendered={}
     render_font = None
@@ -26,6 +27,8 @@ class GraphMaker:
         self.font = pygame.font.Font(None,24)
 
     def draw(self,data,freq):
+        
+        self.number+=1
 
         (sw, sh) = self.screen.get_size()
         pygame.draw.rect(self.screen,(0,0,0),(0,0,sw,sh))
@@ -150,7 +153,8 @@ class GraphMaker:
     def draw_common(self,sx,sy):
         text = 'Visible FFT points: '+str(self.ndraw) + '\n' +\
                'Total FFT points: '+str(self.n_points) + '\n' +\
-               'Sampling rate: '+str(self.freq) + 'Hz\n' 
+               'Sampling rate: '+str(self.freq) + 'Hz\n'+\
+               str(self.number)
 
         lines = text.split('\n')
         for i,line in enumerate(lines):

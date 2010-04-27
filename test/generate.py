@@ -82,12 +82,14 @@ if __name__=="__main__":
 #    sinwaves(5000,freqs,6,"sin_1-21_5000_6sec.dat")
 #
     chs = list()
-    chs.append( ((50,20),(0,0)) )
-    chs.append( ((1,250),(0,0)) )
-    chs.append( ((5,200),(0,0)) )
-    chs.append( ((10,150),(0,0)) )
-    chs.append( ((15,100),(0,0)) )
-    sinwaves2(5000,chs,10,"15hz.txt")
+    for i in range(25):
+    #chs.append( ((50,20),(0,0)) )
+    #chs.append( ((1,250),(0,0)) )
+    #chs.append( ((5,200),(0,0)) )
+    #chs.append( ((10,150),(0,0)) )
+    #chs.append( ((15,100),(0,0)) )
+        chs.append( ((i*2,100*i/2),(0,0)) )
+    sinwaves2(5000,chs,10,"25.txt")
 
 
 #    chs = list()

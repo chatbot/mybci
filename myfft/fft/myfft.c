@@ -9,10 +9,14 @@
 #include <unistd.h>
 
 int iter = 0;
+old_n_points = 0;
+old_n_channels = 0;
+cufftHandle plan;
+
 
 int do_fft(int n_channels, int n_points, int *buffer, int *outbuffer)
 {
-    cufftHandle plan;
+    //cufftHandle plan;
     cufftComplex *devPtr;
     //cufftReal indata[n_points*n_channels];
     //cufftComplex data[n_points*n_channels];
@@ -85,7 +89,14 @@ int do_fft(int n_channels, int n_points, int *buffer, int *outbuffer)
 
 
         /* creates 1D FFT plan */
-        cufftPlan1d(&plan, n_points, CUFFT_C2C, n_channels);
+        if ((old_n_points != n_points) || (old_n_channels != n_channels)) {
+            printf("myfft: plan creation!\n");
+            // here will be memory leak while changing plan
+            // TODO fix it
+            cufftPlan1d(&plan, n_points, CUFFT_C2C, n_channels);
+            old_n_channels = n_channels;
+            old_n_points = n_points;
+        }
 
 
         /*
@@ -111,7 +122,7 @@ int do_fft(int n_channels, int n_points, int *buffer, int *outbuffer)
         cudaMemcpy(data, devPtr, sizeof(cufftComplex)*n_points*n_channels, cudaMemcpyDeviceToHost);
 
         /* deletes CUFFT plan */
-        cufftDestroy(plan);
+        //cufftDestroy(plan);
 
     /* frees GPU memory */
         cudaFree(devPtr);

@@ -18,6 +18,7 @@ else:
 n_points = None
 n_channels = None
 frequency = None
+number = 0
 
 xin = EEGTransport('udp_m_serv','224.0.0.1',mcast_port)
 addr='0.0.0.0'
@@ -110,4 +111,6 @@ while True:
     input(pygame.event.get(),g)
     data = generate_data()
     g.draw(data,frequency)
+    number+=1
+    print number
     

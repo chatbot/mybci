@@ -7,18 +7,24 @@ from ctypes import *
 import Queue
 from FftCalculator import *
 
-cwt_n_points = int(sys.argv[1]) #4096
+n_fft_points = int(sys.argv[1]) #4096
 
-if len(sys.argv)>2:
-    mcast_port = int(sys.argv[2])
-    mcast_out_port = int(sys.argv[3])
+if len(sys.argv) == 3:
+    step = int(sys.argv[2]) #4096
+else:
+    step = n_fft_points
+
+if len(sys.argv)>3:
+    mcast_port = int(sys.argv[3])
+    mcast_out_port = int(sys.argv[4])
 else:
     mcast_port = 17001
     mcast_out_port = 17002
 
 
 #tcpN_port = int(sys.argv[3]);
-print 'n points = %i' % cwt_n_points
+print 'n points = %i' % n_fft_points
+print 'step = %i' % step
 print 'mcast_port = %i' % mcast_port
 print 'mcast_out_port = %i' % mcast_out_port
 
@@ -26,7 +32,7 @@ print 'mcast_out_port = %i' % mcast_out_port
 
 # datablock queue
 q = None
-# maximum length of queue, computed from header.n_channels and cwt_n_points
+# maximum length of queue, computed from header.n_channels and n_fft_points
 q_maxlen = None
 # current length of queue
 q_len = None
@@ -64,7 +70,7 @@ calc.start()
 
 
 def reinit_arrays(new_n_channels, new_n_points):
-    global q, q_len, q_maxlen, cwt_n_points,n_channels,n_points
+    global q, q_len, q_maxlen, n_fft_points,n_channels,n_points
     global newsock
 
     print new_n_channels, new_n_points
@@ -76,9 +82,9 @@ def reinit_arrays(new_n_channels, new_n_points):
     for i in range(n_channels):
         q.append([])
 #    q_len = 0
-    q_maxlen = int(ceil(float(cwt_n_points)/n_points))
+    q_maxlen = int(ceil(float(n_fft_points)/n_points))
     sys.stderr.write("Initialization!\n\
-cwt_n_points: " + str(cwt_n_points) + ", n_points: " + str(n_points) + ", q_maxlen: " + str(q_maxlen) +
+n_fft_points: " + str(n_fft_points) + ", n_points: " + str(n_points) + ", q_maxlen: " + str(q_maxlen) +
 ""                     "\n")
 
 def nextpow2(i):
@@ -89,18 +95,18 @@ def nextpow2(i):
 
 
 def recompute():
-    global xout, xin,  n_channels, n_points, cwt_n_points, q
+    global xout, xin,  n_channels, n_points, n_fft_points, q
     ary=[]
 
 
-    cwt_new_points = nextpow2(cwt_n_points)
+    cwt_new_points = nextpow2(n_fft_points)
     print "cwt_new_points % ", cwt_new_points
-    z = ndarray(cwt_new_points-cwt_n_points,dtype=int)
+    z = ndarray(cwt_new_points-n_fft_points,dtype=int)
     z.fill(0)
 
     for i in range(n_channels):
         a = concatenate(q[i])
-        a = a[:cwt_n_points]
+        a = a[:n_fft_points]
         #print 'shape',a.shape
 #        print 'lena:', len(a)
         ary.append(a)
@@ -178,7 +184,7 @@ while (True):
         print 'Header changed, reinitialization ('+str(header.n_channels)+')'
         reinit_arrays(header.n_channels, header.n_points)
         frequency = xin.getTransportHeader().getEEGHeader().frequency
-        calc.reset(header.n_channels, header.n_points, cwt_n_points, frequency)
+        calc.reset(header.n_channels, header.n_points, n_fft_points, frequency, step)
         continue
 
     # first run - initialization            
@@ -187,7 +193,7 @@ while (True):
         print 'Header changed, reinitialization ('+str(header.n_channels)+')'
         reinit_arrays(header.n_channels, header.n_points)
         frequency = xin.getTransportHeader().getEEGHeader().frequency
-        calc.reset(header.n_channels, header.n_points, cwt_n_points, frequency)
+        calc.reset(header.n_channels, header.n_points, n_fft_points, frequency, step)
 
     
 #    open("data.out","wb").write(data)
